@@ -28,10 +28,10 @@ public class WordCountTool extends Configured implements Tool {
 		// Our input file is a text file.
 		job.setInputFormatClass(TextInputFormat.class);
 
-		// Our output is a mapping from text to text. (See the tutorial for
-		// some notes about how you could map from text to integer instead.)
+		// Our output is a mapping of text to integers. (See the tutorial for
+		// some notes about how you could map from text to text instead.)
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+		job.setOutputValueClass(IntWritable.class);
 
 		// Limit the number of reduce/map classes to what was specified on
 		// the command line.
