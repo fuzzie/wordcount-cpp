@@ -78,7 +78,10 @@
   and collecting your results.
 
   We've assigned everyone accounts with the same name as their DAS-4 accounts (usernames `\texttt{cpp1501}', `\texttt{cpp1502}', etc), but the passwords
-  are different. If you didn't get your password already, then ask us in the first computer lab, or via e-mail. \\
+  are different. If you didn't get your password already, then ask us in the first computer lab, or via e-mail.
+
+  Jeroen Schot has put together a VirtualBox VM which you should be able to use, if you have difficulties making this work on your computer.
+  You can find it at: \\ \texttt{http://beehub.nl/surfsara-hadoop/public/hathi-cpp2015.ova} \\
 
   Read the rest of this section \textbf{carefully}, and make sure you follow \textbf{all} the instructions. \\
 
@@ -142,7 +145,9 @@ Compiled by jenkins on 2014-11-13T21:10Z
   \subsection{Building the code}
 
   You can install Maven on Ubuntu/Debian by running \texttt{apt-get install maven}.
-  
+  \footnote{If you have problems with Maven, you can manually download the libraries you need, put them in a \texttt{lib} directory, and then run the supplied
+  \texttt{compile.sh} shell script to compile. We don't really support this method; please use Maven if you can.}
+
   To compile your code and produce a \texttt{jar} file, automatically downloading any needed dependencies, run this:
 \begin{lstlisting}
 $ mvn package
@@ -153,10 +158,7 @@ $ mvn package
   After compiling, the \texttt{target} directory should (hopefully) contain a jar file called\\ \texttt{wordcount-example-0.1-SNAPSHOT.jar}, which contains
   all the needed libraries, and the compiled code for your MapReduce job.
 
-  (If you have problems with Maven, you can manually download the libraries you need, put them in a \texttt{lib} directory, and then run the supplied
-  \texttt{compile.sh} shell script to compile. We don't really support this method; please use Maven if you can.)
-
-  \subsection{Running the code}
+   \subsection{Running the code}
 
   You can run the code in two different ways:
 
@@ -383,19 +385,19 @@ The \texttt{Reduce}'s task is simple: it just has to add the values (counts) of 
   }
 \end{lstlisting}
 
-After the \texttt{Reduce} class has added all these values, it writes it to the output,
-as a string: 
+After the \texttt{Reduce} class has added all these values, it writes the result as the output:
 
+\begin{lstlisting}
+output.collect(key, new IntWritable(sum));
+\end{lstlisting}
+
+Alternatively, you could write some freeform (string) data to the output. To do this, you'd
+need to change the last \texttt{IntWritable} to \texttt{Text} in the \texttt{Reduce} class's \texttt{extends} clause, and the OutputValueClass
+in the WordCountTool \texttt{run} function (you'd also need to call \texttt{setMapOutputValueClass}, because your \texttt{Mapper} would still produce integers). Then,
+as an example:
 \begin{lstlisting}
 String value = String.valueOf(count) + "\t" + String.valueOf(sum);
 context.write(key, new Text(value));
-\end{lstlisting}
-
-Alternatively, you could write just the sums to the output, as integers. To do this, you'd
-need to change the last \texttt{IntWritable} to \texttt{Text} in the \texttt{Reduce} class's \texttt{extends} clause, and the OutputValueClass
-in the WordCountTool \texttt{run} function. Then, instead:
-\begin{lstlisting}
-output.collect(key, new IntWritable(sum));
 \end{lstlisting}
 
 %The rest of the code is for reporting the progress:
@@ -408,7 +410,9 @@ output.collect(key, new IntWritable(sum));
 %rprtr.incrCounter(Counters.OUTPUT_LINES, 1);
 %\end{lstlisting}
 
-As you saw earlier, the output of the \texttt{Reduce} class is saved in the output path of the job.
+As you saw earlier, the output of the \texttt{Reduce} class is saved in the output path of the job, in parts.
+
+You should now be ready to begin the assignment.
 %you specified in the \texttt{outputFolder} variable in the \texttt{AssignmentMapreduce} class in the file named part-*. 
 
 %\section{Notes}
