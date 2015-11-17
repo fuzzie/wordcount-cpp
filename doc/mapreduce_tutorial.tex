@@ -1,0 +1,417 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{fullpage}
+\usepackage[utf8]{inputenc}
+% \usepackage{url}
+\usepackage{breakurl} 
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{mathtools}
+
+% A modified version of the tutorial from https://github.com/skoulouzis/MapReduceAssignment14-15
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  language=Java,        
+  basicstyle=\footnotesize,     
+  backgroundcolor=\color{white},  
+  showspaces=false,      
+  showstringspaces=false,    
+  showtabs=false,        
+  frame=single,         
+  rulecolor=\color{black},   
+  tabsize=2,          
+  captionpos=b,        
+  breaklines=true,        
+  title=\lstname,        
+  keywordstyle=\color{blue},    
+  commentstyle=\color{dkgreen},   
+  stringstyle=\color{mauve},    
+  escapeinside={\%*}{*)},     
+  morekeywords={*,...} 
+}
+
+
+
+\date{}
+
+
+\title{Hadoop Tutorial\\
+  Concurrency en Parallel Programmeren 2015,\\
+  University of Amsterdam
+}
+
+
+\begin{document}
+  \maketitle
+  
+  \tableofcontents
+  
+  \section{Overview}
+  
+  Hadoop MapReduce is a framework for writing applications which can process large volumes of data (``Big Data''), by doing the work in a distributed,
+  parallel way.
+
+  As you learnt in the lecture, MapReduce tasks are split into two different parts; a \emph{mapper}, which processes the input files in chunks and
+  produces an intermediate output version, and a \emph{reducer}, which takes sorted/merged versions of the mapper output as input, and outputs
+  the final output files. These input and output files are stored on HDFS, the Hadoop Distributed Filesystem.
+
+  First, you need to install Hadoop, and make sure that you can access the Hadoop cluster we'll be using to run jobs.
+  Then, we'll try building and running an example Hadoop application. Finally, we'll go through the application's code, which
+  you'll use as a framework for your Hadoop assignment. Once you're done, you can start on the assignment.
+
+  Before we begin, a warning: This tutorial was rewritten at the last minute and may contain mistakes. Ask one of the assistants
+  if you encounter any problems!
+
+  \pagebreak
+  \section{Installing Hadoop}
+
+  Before you can begin, you should download Hadoop by running this command:\\
+  \texttt{git clone https://github.com/sara-nl/hathi-client}
+
+  Once you've downloaded this, you'll need to edit the \texttt{hathi-client/conf/settings.linux} script
+  and add the path to your Java installation directory. If you're using Ubuntu, you can just uncomment
+  the line under 'Java home for Ubuntu', and comment out the one under 'Java home for CentOS'.
+
+  Then, run `\texttt{cd hathi-client}' and `\texttt{source conf/settings.linux}' to add Hadoop
+  to your path. You must do this in \textbf{every shell} before you can use Hadoop (or Kerberos) from it.
+  
+  In order to do the assignment, you'll need to be able to execute MapReduce jobs on the SURFsara Hadoop cluster, which we're going to be using
+  this year, since DAS-4 has very limited capacity for running Hadoop jobs. SURFsara have kindly allowed our students to use this cluster for this
+  assignment, but we can't guarantee it will always have enough capacity for your jobs; make sure you don't wait until the last day before the
+  deadline to run your jobs. Also, please be \textbf{careful} and don't use their machines for anything other than submitting your Hadoop jobs
+  and collecting your results.
+
+  We've assigned everyone accounts with the same name as their DAS-4 accounts (usernames `cpp1501', `cpp1502', etc), but the passwords
+  are different. If you didn't get your password already, then ask us in the first computer lab, or via e-mail.
+
+  In order to submit jobs, you'll need a Kerberos ticket, which authenticates you to the system. You can get one by running
+  `kinit cpp1509@CUA.SURFSARA.NL' (replacing cpp1509 with your account name), and typing your password. If you don't have the kinit
+  command on your system, it's part of Kerberos 5; you can install it with \texttt{apt-get install krb5-user} on Ubuntu/Debian.
+  (Please don't log into the cluster using ssh unless you have no other way to work. The login machine is not allocated enough resources
+  for us to use it.)
+
+  To make sure that you're able to run Hadoop, you can run the following command: 
+  
+  \lstset{language=}
+  
+  \begin{lstlisting}
+    $ hadoop version
+  \end{lstlisting}
+  
+  The output should look like this: 
+  \begin{lstlisting}
+Hadoop 2.6.0
+Subversion https://git-wip-us.apache.org/repos/asf/hadoop.git -r e3496499ecb8d220fba99dc5ed4c99c8f9e33bb1
+Compiled by jenkins on 2014-11-13T21:10Z
+Compiled with protoc 2.5.0
+From source with checksum 18e43357c8f927c0695f1e9522859d6a
+This command was run using /home/username/hathi-client/hadoop-2.6.0/share/hadoop/common/hadoop-common-2.6.0.jar
+  \end{lstlisting}
+
+  To make sure that you can communicate with the Hadoop cluster, you can try listing the running jobs on the cluster:
+
+  \begin{lstlisting}
+  mapred job -list
+  \end{lstlisting}
+
+  The output should contain a list of jobs (although it might be empty). If you don't have your settings configured
+  correctly, or you don't have a valid Kerberos ticket, you'll get an error message instead.
+
+  \section{Running the WordCount Tutorial}
+
+  This tutorial is based on the Hadoop tutorial; thanks to Jeroen Schot for helping adapt it.
+
+  We're going to start by running the standard WordCount example, which simply counts the occurrences of each word in a given input file.
+  Make sure you do this! After we're done, you'll implement the actual assignment by continuing to build on top of this example.
+
+  \subsection{Download the files}
+
+  You should start by downloading the project code from Blackboard. It should contain a \texttt{pom.xml} file, which is a project file for the tool
+  called Maven which you'll be using to build your code. It should also contain a \texttt{src} directory, which contains the source code (in a
+  subdirectory called \texttt{main/java/nl/uva/cpp/}).
+
+  You also need an input file in which to count words; why not use the data file which you'll later be using?
+  You can find it in \texttt{tweets2009-06-brg.txt}, which should also be available on Blackboard. 
+
+  \subsection{Building the code}
+
+  You can install Maven on Ubuntu/Debian by running \texttt{apt-get install maven}, and then run \texttt{mvn package} to download any needed
+  dependencies, compile your code, and produce a \texttt{jar} file.
+
+  The project depends on the Hadoop API (\url{http://hadoop.apache.org/}), the Stanford Natural Language Processing API (\url{http://nlp.stanford.edu/}) and the JLangDetect API (\url{https://github.com/melix/jlangdetect}). These last two APIs will be used for sentiment analysis\footnote{Sentiment analysis aims to determine the attitude of a person} and language identification\footnote{Detecting whether the written language is Dutch, English, etc. }.
+
+  After compiling, the \texttt{target} directory should (hopefully) contain a jar file called\\ \texttt{wordcount-example-0.1-SNAPSHOT.jar}, which contains
+  all the needed libraries, and the compiled code for your MapReduce job.
+
+  (If you have problems with Maven, you can manually download the libraries you need, put them in a \texttt{lib} directory, and then run the supplied
+  \texttt{compile.sh} shell script to compile. We don't really support this method; please use Maven if you can.)
+
+  \subsection{Running the code}
+
+  You can run the code in two different ways:
+
+  \begin{enumerate}
+    \item Locally: This mode doesn't use the Hadoop cluster at all. It runs the code on a single machine e.g. your laptop/workstation and uses the local file system. You can use this mode for testing and debugging your code.
+    \item Remotely: This mode uses the Hadoop cluster to run your tasks, and HDFS for storage. You won't be able to see debug messages from your code, so you should only use this when running your final experiments.
+  \end{enumerate}
+
+For our assignment, we'll be using \texttt{tweets2009-06-brg.txt} as the input
+file, and an arbitrary directory (we suggest \texttt{output/}) as the output file. Remember, our tool
+expects these to be provived on the command line.
+
+\subsubsection{Running the code locally}
+
+As long you have the input file on your local disk, you can run the job locally by typing:
+
+\begin{lstlisting}
+  $ mvn exec:java -Dexec.args="tweets2009-06-brg.txt output/ 1"
+\end{lstlisting}
+
+Or alternatively, if you're building it without Maven:
+
+\begin{lstlisting}
+  $ java -jar nl.uva.cpp.WordCount.jar tweets2009-06-brg.txt output/ 1 
+\end{lstlisting}
+
+\subsubsection{Running the code remotely}
+
+Before you run the job remotely on the Hadoop cluster, you have to copy the \texttt{tweets2009-06-brg.txt} to the HDFS. You can do this
+using the \texttt{hdfs} command:
+
+\begin{lstlisting}
+  $ hdfs dfs -copyFromLocal tweets2009-06-brg.txt
+\end{lstlisting}
+
+This will copy the \texttt{tweets2009-06-brg.txt} file to the cluster's HDFS, and store it inside your home directory.
+
+To run the job remotely (in a fully-distributed mode, on the cluster), just run it using Hadoop (the 1 means that you want
+only one task, as you'll see later):
+\begin{lstlisting}
+  $ yarn jar target/wordcount-example-0.1-SNAPSHOT.jar nl.uva.cpp.WordCount tweets2009-06-brg1of2.txt output/ 1
+\end{lstlisting}
+
+\textbf{Attention:} If you attempt to run the job again, it won't work, because the output directory already exists. Instead, you'll get an error like:
+\begin{lstlisting}
+  Output directory hdfs://hathi-surfsara/user/cpp1509/output already exists
+\end{lstlisting}
+
+If you want to run the job again, you have to either delete the output folder (by running \texttt{hdfs dfs -rm -r output}), or specify a different one. 
+
+\subsection{Monitoring}
+
+After you've submitted a job, you'll see output like this:
+
+\begin{lstlisting}
+15/11/17 16:28:30 INFO impl.YarnClientImpl: Submitted application application_1446724277285_9813
+15/11/17 16:28:30 INFO mapreduce.Job: The url to track the job: http://head05.hathi.surfsara.nl:8088/proxy/application_1446724277285_9813/
+15/11/17 16:28:30 INFO mapreduce.Job: Running job: job_1446724277285_9813
+\end{lstlisting}
+
+You can only use the provided URL to track progress if you've configured Firefox to use your Kerberos credentials.
+If necessary, you can monitor the progress of your job using the command line like this:
+
+\begin{lstlisting}
+$ mapred job -status job_1446724277285_9813
+\end{lstlisting}
+
+As we discussed earlier, you can also list all jobs running:
+
+\begin{lstlisting}
+$ mapred job -list
+\end{lstlisting}
+
+And you can kill your own jobs if necessary:
+
+\begin{lstlisting}
+$ mapred job -kill <JOB ID>
+\end{lstlisting}
+
+%To check out the queue information you can type:
+%\begin{lstlisting}
+%$hadoop queue -list
+%\end{lstlisting}
+
+  \subsection{Downloading the results}
+
+  Finally, you can download the results from the remote HDFS by using the \texttt{-copyToLocal} parameter:
+
+\begin{lstlisting}
+$ hdfs dfs -copyToLocal output
+\end{lstlisting}
+
+The output will be files with names starting in \texttt{part-}, in this directory. Take a look!
+  
+  \section{A closer look at the WordCount Tutorial}
+  
+  In this section, we'll be looking at the Java source code in the \texttt{src/main/java/nl/uva/cpp/} directory.
+
+  \subsection{How the job works}
+
+  When we run our application, the main function in \texttt{WordCount.java} is run, which simply starts the Hadoop
+  \texttt{ToolRunner} with our tool.
+
+  The implementation of the tool itself is in \texttt{WordCountTool.java}. It does several important things, all of which
+  you should make sure you look at:
+
+  \begin{itemize}
+	  \item First, it sets the input and output task paths, which are provided on the command line. \\
+		  \textbf{Attention}: Remember, the input and output paths can be either local (if we are running the job in local mode), or HDFS paths (if we are running in remote/fully-distributed mode).
+
+	  \item Then, it sets the mapper/reducer classes to use, to the WordCountMapper and WordCountReducer tools which are
+		  also part of our application.
+
+	  \item We also need to set the input and output type of the input files for the mappers, so it does that.
+  The input type is very important, because it specifies the way the input is going to be split. The \texttt{TextInputFormat} is meant for plain text files -- files are broken into lines. Keys are the position in the file, and values are the line of text.
+  
+	  \item Sets the number of tasks to run, which are also provided on the command line. We want to use the same number
+		  of mapper tasks as the number of reduce tasks, for simplicity. Since our input files are fairly
+		  small, by default, MapReduce will refuse to split the input lines into multiple pieces, which means
+		  we can only use a single mapper. We set the split size (in bytes) to a lower value, to force it to
+		  split the input into multiple pieces, so that we can get a useful number of mappers.
+
+	  \item Finally, it actually runs the job.
+  \end{itemize}
+
+%  This class contains the run method for our tool. We.
+%  Look at the class in \texttt{src/nl/uva/AssignmentMapreduce.java}. This class contains the main method and the job configuration. 
+  % \lstinputlisting[language=Java]{../src/nl/uva/AssignmentMapreduce.java}
+%  As you can see in method \texttt{configureJob()} we set the classes for the map and reduce task. After setting the map class we set the type for the map output key/value pairs:
+  
+%  \lstset{language=Java}      
+%  \begin{lstlisting}
+%    conf.setMapOutputKeyClass(Text.class);
+%    conf.setMapOutputValueClass(IntWritable.class);
+%  \end{lstlisting}
+
+ 
+%  Next, we need to set the input and output paths for the entire job. The variable \texttt{dataset} is the path of the text file we'll use to count the words, and the \texttt{outputFolder} is where we'll put the results. 
+  
+%  \begin{lstlisting}
+%    Path localPath = new Path(dataset);
+%    FileInputFormat.setInputPaths(conf, localPath);
+%    FileOutputFormat.setOutputPath(conf, new Path(outputFolder));
+%  \end{lstlisting}       
+  
+%  Finally, we set the maximum number of mappers and reducers for the job:
+%  \begin{lstlisting}
+%    if (maxMap > -1) {
+%      conf.setNumReduceTasks(maxMap);
+%      conf.setNumMapTasks(maxMap);
+%    }
+%  \end{lstlisting}
+    
+  \subsection{Mapper}
+ 
+  The mapper is implemented in \texttt{WordCountMapper.java}. It outputs a key/value pair of (word, 1) for every word it sees in the input.
+
+  It is called once for every key in the input (in our case, this means that it's called for every line). It processes this input,
+  and produces key/value pairs as output (which are then provided as input to the Reduce tasks).
+
+  In the provided example, we're just counting words -- so the key we write is the word, and the value is always one.
+
+%  After configuring the job we define the Map job. Look at the class in \texttt{src/nl/uva/Map.java}: This class contains the map job. It effectively reads the input file line by line and transmits the key/value pairs. The key in this case is the word and the value is one.
+  % \lstinputlisting[language=Java]{../src/nl/uva/Map.java}
+  
+%  Note that in the class declaration we implement the \texttt{Mapper} interface. When implementing the \texttt{Mapper} interface, it is important to correctly define the type of the input and output key/value pairs
+%  \begin{lstlisting}
+%    implements Mapper<LongWritable, Text, Text, IntWritable> 
+%  \end{lstlisting}
+  
+%  That same must be done when declaring the \texttt{map} method:
+%  \begin{lstlisting}
+%    LongWritable key, Text value, OutputCollector<Text, IntWritable> oc
+%  \end{lstlisting}
+  
+  In the method, we split each incoming line into words:
+  \begin{lstlisting}
+String line = value.toString().toLowerCase();
+StringTokenizer itr = new StringTokenizer(line);
+  \end{lstlisting}
+  
+  Then, we simply iterate through the words and emit them to the reducer: 
+  \begin{lstlisting}
+    while (itr.hasMoreTokens()) {
+      String token = itr.nextToken();
+      word.set(token);
+      context.write(word, one);
+    }
+  \end{lstlisting}
+  
+  The remaining line just increments a counter, as an example of how a mapper can report progress:
+  
+  \begin{lstlisting}
+context.getCounter(Counters.INPUT_WORDS).increment(1);
+\end{lstlisting}
+
+%Again, to summarize: the emitted key/value pairs will be grouped into keys (in this case words) and transmitted to the reducer. 
+
+% \lstinputlisting[language=Java]{../src/nl/uva/Reduce.java}
+
+\subsection{Reduce}
+
+%Look at the class in \texttt{src/nl/uva/Reduce.java}. As with the \texttt{Map} class, in the \texttt{Reduce} class declaration we implement the \texttt{Reducer} interface. When implementing the \texttt{Reducer} interface, it is important to correctly define the type of the input and output key/value pairs:
+%\begin{lstlisting}
+%  implements Reducer<Text, IntWritable, Text, IntWritable> 
+%\end{lstlisting}
+
+%That same must be done when declaring the \texttt{reduce} method:
+%\begin{lstlisting}
+%  Text key, Iterator<IntWritable> itrtr, OutputCollector<Text, IntWritable> output
+%\end{lstlisting}
+
+The \texttt{Reduce}'s task is simple: it just has to add the values (counts) of the keys (words) which have been emitted from the \texttt{Map} class: 
+
+\begin{lstlisting}
+  int sum = 0;
+  int count = 0;
+  for (IntWritable val : values) {
+	  sum += val.get();
+	  count++;
+  }
+\end{lstlisting}
+
+After the \texttt{Reduce} class has added all these values, it writes it to the output,
+as a string: 
+
+\begin{lstlisting}
+String value = String.valueOf(count) + "\t" + String.valueOf(sum);
+context.write(key, new Text(value));
+\end{lstlisting}
+
+Alternatively, you could write just the sums to the output, as integers. To do this, you'd
+need to change the last \texttt{IntWritable} to \texttt{Text} in the \texttt{Reduce} class's \texttt{extends} clause, and the OutputValueClass
+in the WordCountTool \texttt{run} function. Then, instead:
+\begin{lstlisting}
+output.collect(key, new IntWritable(sum));
+\end{lstlisting}
+
+%The rest of the code is for reporting the progress:
+
+%\begin{lstlisting}
+%  count++;
+%  if ((++count % 100) == 0) {
+%  rprtr.setStatus("Finished processing " + count + " records ");
+%}
+%rprtr.incrCounter(Counters.OUTPUT_LINES, 1);
+%\end{lstlisting}
+
+As you saw earlier, the output of the \texttt{Reduce} class is saved in the output path of the job.
+%you specified in the \texttt{outputFolder} variable in the \texttt{AssignmentMapreduce} class in the file named part-*. 
+
+%\section{Notes}
+%To check out the code for this assignment you have to use git:
+%\begin{lstlisting}
+%  $ git clone https://github.com/skoulouzis/MapReduceAssignment14-15.git
+%\end{lstlisting}
+
+%Alternatively you can download the zip file from \url{https://github.com/skoulouzis/MapReduceAssignment14-15/archive/master.zip}
+
+%\section{Next}
+
+%If you got this far, then you should be ready to go and try implementing the assignment!
+
+\end{document}     
