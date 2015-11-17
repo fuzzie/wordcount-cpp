@@ -8,7 +8,6 @@ import org.apache.hadoop.mapreduce.lib.input.*;
 import org.apache.hadoop.mapreduce.lib.output.*;
 import org.apache.hadoop.util.*;
 
-
 public class WordCountTool extends Configured implements Tool {
 
 	@Override
@@ -17,15 +16,32 @@ public class WordCountTool extends Configured implements Tool {
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(this.getClass());
 
+		// Set the input and output paths for the job, to the paths given
+		// on the command line.
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
+		// Use our mapper and reducer classes.
 		job.setMapperClass(WordCountMapper.class);
 		job.setReducerClass(WordCountReducer.class);
-		job.setInputFormatClass(TextInputFormat.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
 
+		// Our input file is a text file.
+		job.setInputFormatClass(TextInputFormat.class);
+
+		// Our output is a mapping from text to text. (See the tutorial for
+		// some notes about how you could map from text to integer instead.)
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+
+		// Limit the number of reduce/map classes to what was specified on
+		// the command line.
+		int numTasks = Integer.valueOf(args[2]);
+		job.setNumReduceTasks(numTasks);
+		job.getConfiguration().setInt("mapred.max.split.size", 750000 / numTasks);
+		// This limits the number of running mappers, but not the total.
+		// job.getConfiguration().setInt("mapreduce.job.running.map.limit", numTasks);
+
+		// Run the job!
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 }

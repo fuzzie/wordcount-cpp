@@ -8,7 +8,15 @@
   <properties>
     <java.version>7</java.version>
     <hadoop.version>2.6.0</hadoop.version>
+    <exec.mainClass>nl.uva.cpp.WordCount</exec.mainClass>
   </properties>
+  <repositories>
+    <repository>
+      <id>jlangdetect-googlecode</id>
+      <name>JLangDetect Maven repository</name>
+      <url>https://jlangdetect.googlecode.com/svn/repo</url>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -20,6 +28,11 @@
       <groupId>edu.stanford.nlp</groupId>
       <artifactId>stanford-corenlp</artifactId>
       <version>3.5.2</version>
+    </dependency>
+    <dependency>
+      <groupId>me.champeau.jlangdetect</groupId>
+      <artifactId>jlangdetect-extra</artifactId>
+      <version>0.4</version>
     </dependency>
   </dependencies>
   <build>
