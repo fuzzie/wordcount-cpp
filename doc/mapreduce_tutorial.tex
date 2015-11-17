@@ -16,6 +16,8 @@
 
 \lstset{ %
   language=Java,        
+  aboveskip=10pt,
+  belowskip=-10pt,
   basicstyle=\ttfamily\footnotesize,     
   backgroundcolor=\color{white},  
   showspaces=false,      
@@ -69,16 +71,6 @@
   \pagebreak
   \section{Installing Hadoop}
 
-  Before you can begin, you should download Hadoop by running this command:\\
-  \texttt{git clone https://github.com/sara-nl/hathi-client}
-
-  Once you've downloaded this, you'll need to edit the \texttt{hathi-client/conf/settings.linux} script
-  and add the path to your Java installation directory. If you're using Ubuntu, you can just uncomment
-  the line under 'Java home for Ubuntu', and comment out the one under 'Java home for CentOS'.
-
-  Then, run `\texttt{cd hathi-client}' and `\texttt{source conf/settings.linux}' to add Hadoop
-  to your path. You must do this in \textbf{every shell} before you can use Hadoop (or Kerberos) from it.
-  
   In order to do the assignment, you'll need to be able to execute MapReduce jobs on the SURFsara Hadoop cluster, which we're going to be using
   this year, since DAS-4 has very limited capacity for running Hadoop jobs. SURFsara have kindly allowed our students to use this cluster for this
   assignment, but we can't guarantee it will always have enough capacity for your jobs; make sure you don't wait until the last day before the
@@ -86,8 +78,20 @@
   and collecting your results.
 
   We've assigned everyone accounts with the same name as their DAS-4 accounts (usernames `\texttt{cpp1501}', `\texttt{cpp1502}', etc), but the passwords
-  are different. If you didn't get your password already, then ask us in the first computer lab, or via e-mail.
+  are different. If you didn't get your password already, then ask us in the first computer lab, or via e-mail. \\
 
+  Read the rest of this section \textbf{carefully}, and make sure you follow \textbf{all} the instructions. \\
+
+  Before you can begin, you should download Hadoop by running this command:\\
+  \texttt{git clone https://github.com/sara-nl/hathi-client}
+
+  You must use this repository! Once you've downloaded this, you'll need to edit the \\ \texttt{hathi-client/conf/settings.linux} script
+  and add the path to your Java installation directory. If you're using Ubuntu, you can just uncomment
+  the line under 'Java home for Ubuntu', and comment out the one under 'Java home for CentOS'.
+
+  Then, run `\texttt{cd hathi-client}' and `\texttt{source conf/settings.linux}' to add Hadoop
+  to your path. You must do this in \textbf{every shell} before you can use Hadoop (or Kerberos) from it.
+  
   In order to submit jobs, you'll need a Kerberos ticket, which authenticates you to the system. You can get one by running
   `\texttt{kinit cpp1509@CUA.SURFSARA.NL}' (replacing \texttt{cpp1509} with your account name), and typing your password. If you don't have the kinit
   command on your system, it's part of Kerberos 5; you can install it with \texttt{apt-get install krb5-user} on Ubuntu/Debian.
@@ -102,14 +106,11 @@
     $ hadoop version
   \end{lstlisting}
   
-  The output should look like this: 
+  The output should look something like this: 
   \begin{lstlisting}
 Hadoop 2.6.0
-Subversion https://git-wip-us.apache.org/repos/asf/hadoop.git -r e3496499ecb8d220fba99dc5ed4c99c8f9e33bb1
+Subversion https://git-wip-us.apache.org/repos/asf/hadoop.git -r e3496...
 Compiled by jenkins on 2014-11-13T21:10Z
-Compiled with protoc 2.5.0
-From source with checksum 18e43357c8f927c0695f1e9522859d6a
-This command was run using /home/username/hathi-client/hadoop-2.6.0/share/hadoop/common/hadoop-common-2.6.0.jar
   \end{lstlisting}
 
   To make sure that you can communicate with the Hadoop cluster, you can try listing the running jobs on the cluster:
@@ -121,11 +122,12 @@ This command was run using /home/username/hathi-client/hadoop-2.6.0/share/hadoop
   The output should contain a list of jobs (although it might be empty). If you don't have your settings configured
   correctly, or you don't have a valid Kerberos ticket, you'll get an error message instead.
 
+  \pagebreak
   \section{Running the WordCount Tutorial}
 
-  This tutorial is based on the Hadoop tutorial; thanks to Jeroen Schot for helping adapt it.
 
-  We're going to start by running the standard WordCount example, which simply counts the occurrences of each word in a given input file.
+  We're going to start by running the standard WordCount example \footnote{This tutorial is based on the Hadoop tutorial; thanks to Jeroen Schot for helping adapt it.},
+  which simply counts the occurrences of each word in a given input file.
   Make sure you do this! After we're done, you'll implement the actual assignment by continuing to build on top of this example.
 
   \subsection{Download the files}
@@ -139,8 +141,12 @@ This command was run using /home/username/hathi-client/hadoop-2.6.0/share/hadoop
 
   \subsection{Building the code}
 
-  You can install Maven on Ubuntu/Debian by running \texttt{apt-get install maven}, and then run \texttt{mvn package} to download any needed
-  dependencies, compile your code, and produce a \texttt{jar} file.
+  You can install Maven on Ubuntu/Debian by running \texttt{apt-get install maven}.
+  
+  To compile your code and produce a \texttt{jar} file, automatically downloading any needed dependencies, run this:
+\begin{lstlisting}
+$ mvn package
+\end{lstlisting}
 
   The project depends on the Hadoop API (\url{http://hadoop.apache.org/}), the Stanford Natural Language Processing API (\url{http://nlp.stanford.edu/}) and the JLangDetect API (\url{https://github.com/melix/jlangdetect}). These last two APIs will be used for sentiment analysis\footnote{Sentiment analysis aims to determine the attitude of a person} and language identification\footnote{Detecting whether the written language is Dutch, English, etc. }.
 
@@ -203,7 +209,9 @@ If you want to run the job again, you have to either delete the output folder (b
 
 \subsection{Monitoring}
 
-After you've submitted a job, you'll see output like this:
+After you've submitted a job, the Hadoop client will wait until the job is finished (which might take some
+time, if the cluster is busy), and report progress.
+You'll see output like this, telling you that your job has been submitted:
 
 \begin{lstlisting}
 15/11/17 16:28:30 INFO impl.YarnClientImpl: Submitted application application_1446724277285_9813
@@ -211,14 +219,15 @@ After you've submitted a job, you'll see output like this:
 15/11/17 16:28:30 INFO mapreduce.Job: Running job: job_1446724277285_9813
 \end{lstlisting}
 
-You can only use the provided URL to track progress if you've configured Firefox to use your Kerberos credentials.
-If necessary, you can monitor the progress of your job using the command line like this:
+Do \textbf{not} try to use the provided URL (you have to authenticate using your Kerberos credentials,
+which is problematic). You can monitor the progress of your job using the command line like this:
 
 \begin{lstlisting}
 $ mapred job -status job_1446724277285_9813
 \end{lstlisting}
 
-As we discussed earlier, you can also list all jobs running:
+\pagebreak
+As we discussed earlier, you can also list all jobs which are running on the cluster:
 
 \begin{lstlisting}
 $ mapred job -list
