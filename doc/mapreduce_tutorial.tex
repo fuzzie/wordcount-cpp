@@ -73,9 +73,8 @@
 
   In order to do the assignment, you'll need to be able to execute MapReduce jobs on the SURFsara Hadoop cluster, which we're going to be using
   this year, since DAS-4 has very limited capacity for running Hadoop jobs. SURFsara have kindly allowed our students to use this cluster for this
-  assignment, but we can't guarantee it will always have enough capacity for your jobs; make sure you don't wait until the last day before the
-  deadline to run your jobs. Also, please be \textbf{careful} and don't use their machines for anything other than submitting your Hadoop jobs
-  and collecting your results.
+  assignment, but it is a shared resource; make sure you don't wait until the last day before the deadline to run your jobs. Please be
+  \textbf{careful} and don't use their machines for anything other than submitting your Hadoop jobs and collecting your results.
 
   We've assigned everyone accounts with the same name as their DAS-4 accounts (usernames `\texttt{cpp1501}', `\texttt{cpp1502}', etc), but the passwords
   are different. If you didn't get your password already, then ask us in the first computer lab, or via e-mail.
@@ -85,21 +84,21 @@
 
   Read the rest of this section \textbf{carefully}, and make sure you follow \textbf{all} the instructions. \\
 
-  Before you can begin, you should download Hadoop by running this command:\\
+  Before you can begin, you must download Hadoop and the cluster configuration by running this command:\\
   \texttt{git clone https://github.com/sara-nl/hathi-client}
 
-  You must use this repository! Once you've downloaded this, you'll need to edit the \\ \texttt{hathi-client/conf/settings.linux} script
-  and add the path to your Java installation directory. If you're using Ubuntu, you can just uncomment
-  the line under 'Java home for Ubuntu', and comment out the one under 'Java home for CentOS'.
+  Once you've downloaded this, you'll need to edit the \\ \texttt{hathi-client/conf/settings.linux} script
+  and change the exported \texttt{JAVA\_HOME} to match your system. On Linux, it's usually one of the directories in \texttt{/usr/lib/jvm/},
+  for example \texttt{/usr/lib/jvm/default-java}.
 
   Then, run `\texttt{cd hathi-client}' and `\texttt{source conf/settings.linux}' to add Hadoop
   to your path. You must do this in \textbf{every shell} before you can use Hadoop (or Kerberos) from it.
   
-  In order to submit jobs, you'll need a Kerberos ticket, which authenticates you to the system. You can get one by running
+  In order to submit jobs,
+  \footnote{Please don't log into the cluster using ssh.}
+  you'll need a Kerberos ticket, which authenticates you to the system. You can get one (for a period of about 24 hours) by running
   `\texttt{kinit cpp1509@CUA.SURFSARA.NL}' (replacing \texttt{cpp1509} with your account name), and typing your password. If you don't have the kinit
   command on your system, it's part of Kerberos 5; you can install it with \texttt{apt-get install krb5-user} on Ubuntu/Debian.
-  (Please don't log into the cluster using ssh unless you have no other way to work. The login machine is not allocated enough resources
-  for us to use it.)
 
   To make sure that you're able to run Hadoop, you can run the following command: 
   
@@ -119,11 +118,13 @@ Compiled by jenkins on 2014-11-13T21:10Z
   To make sure that you can communicate with the Hadoop cluster, you can try listing the running jobs on the cluster:
 
   \begin{lstlisting}
-  mapred job -list
+  $ mapred job -list
   \end{lstlisting}
 
-  The output should contain a list of jobs (although it might be empty). If you don't have your settings configured
-  correctly, or you don't have a valid Kerberos ticket, you'll get an error message instead.
+  The output should be a list of jobs (it might be empty). If you did all of the above, and you
+  still get an error, you might need the \emph{Unlimited Strength} policy for Java (Google it). The download will
+  be two jar files; copy them to \texttt{jre/lib/security} inside your Java home (which you already set in your
+  configuration). Remember, you probably have to do this using \texttt{sudo}.
 
   \pagebreak
   \section{Running the WordCount Tutorial}
@@ -140,7 +141,8 @@ Compiled by jenkins on 2014-11-13T21:10Z
   subdirectory called \texttt{main/java/nl/uva/cpp/}).
 
   You also need an input file in which to count words; you can just use one of the data files you'll have to use for the assignment.
-  You can find it in \texttt{tweets2009-06-brg.txt}, which should also be available on Blackboard. 
+  You can find it in \texttt{tweets2009-06-brg.txt}, which should also be available on Blackboard (it might have a different name,
+  be warned).
 
   \subsection{Building the code}
 
@@ -153,10 +155,11 @@ Compiled by jenkins on 2014-11-13T21:10Z
 $ mvn package
 \end{lstlisting}
 
-  The project depends on the Hadoop API (\url{http://hadoop.apache.org/}), the Stanford Natural Language Processing API (\url{http://nlp.stanford.edu/}) and the JLangDetect API (\url{https://github.com/melix/jlangdetect}). These last two APIs will be used for sentiment analysis\footnote{Sentiment analysis aims to determine the attitude of a person} and language identification\footnote{Detecting whether the written language is Dutch, English, etc. }.
-
-  After compiling, the \texttt{target} directory should (hopefully) contain a jar file called\\ \texttt{wordcount-example-0.1-SNAPSHOT.jar}, which contains
+  You will need to run this every time you change your code. After compiling, the \texttt{target} directory should (hopefully) contain a jar file called \texttt{wordcount-example-0.1-SNAPSHOT.jar}, which contains
   all the needed libraries, and the compiled code for your MapReduce job.
+
+
+  The project depends on the Hadoop API (\url{http://hadoop.apache.org/}), the Stanford Natural Language Processing API (\url{http://nlp.stanford.edu/}) and the JLangDetect API (\url{https://github.com/melix/jlangdetect}). These last two APIs will be used for sentiment analysis\footnote{Sentiment analysis aims to determine the attitude of a person} and language identification\footnote{Detecting whether the written language is Dutch, English, etc. }.
 
    \subsection{Running the code}
 
