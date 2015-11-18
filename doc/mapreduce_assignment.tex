@@ -42,8 +42,8 @@
 
 \title{Hadoop Assignment\\
   Concurrency en Parallel Programmeren 2015,\\
-  University of Amsterdam,\\
-  NOT FINAL VERSION
+  University of Amsterdam\\
+  Version 1.0
 }
 
 
@@ -64,7 +64,8 @@
 
   There is a small dataset (5k tweets) available on Blackboard. We also have larger datasets available in \texttt{/projects/cpp2015} on the cluster. Using them for your experiments is optional, but you might find them useful. Remember, though: the cluster is a shared resource. Don't run large numbers of unnecessary experiments!
 
-  This is probably \textbf{not} the final version of this assignment. If you didn't attend the workgroup on Wednesday, please make sure you check Blackboard for updates.
+  For several parts of the assignment, you'll have to make your own decisions about what to do -- for example, which characters you will accept as part
+  of hash tags, and how you will detect identical retweets. Justify your decisions in your report!
 
   \section{Implementation}
 
@@ -200,34 +201,39 @@ DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job
 
   For the final part of the assignment, you need to investigate the main two types of
   engagement on Twitter: retweets, and replies. Remember, the dataset is from 2009,
-  so no metadata is available for this, only the message text. \\
+  so no metadata is available for this, only the message text. Take a look through the
+  example data, and you should find plenty of examples. \\
 
-  Retweets: When people retweet (using RT), it usually means they think the content of the tweet is interesting or useful,
+  \textbf{Retweets}: When people retweet (using RT), it usually means they think the content of the tweet is interesting or useful,
   and so they think their followers would also benefit from seeing it. By retweeting, they say ``take a look,''  and expose
-  the tweet to all their followers, giving the tweet a greater reach.
+  the tweet to all their followers, giving the tweet a greater reach. \\
   
-  Reply: When a tweet is replied to (using @), it suggests that the tweet has
+  \textbf{Reply}: When a tweet is replied to (using @), it suggests that the tweet has
   resonated enough with someone that it sparks a conversation, or encourages
-  someone to share it with their followers. \\
+  someone to share it with their followers.
+  You'll find that most ``replies'' aren't actually replies, but just references to another user. We don't expect you to try and distinguish these;
+  you can just assume that they're all replies (if they're not retweets).
 
   Given the popularity of these two activities, it would be interesting to explore how they are used. You should write code, using MapReduce,
-  which answers the following questions:
+  which answers the following questions (in approximate order of probable difficulty):
 
   \begin{itemize}
   \item How many tweets are there for each type of reaction (retweets, and replies)?
-  \item When do most retweets happen (what times of day), and when do most replies happen? Is this different for different languages?
-  \item What are the top 10 retweeted messages?
+  \item When do most retweets happen (what times of day), and when do most replies happen? (\textbf{Optional}: Is this different for different languages?)
+  \item What are the top 10 retweeted messages, and who are they from?
   \item Who are the top 5 users who are replied to, and which users send the most replies to each of them?
   \item Who are the top 5 users whose messages are retweeted, and who retweeted each of them the most?
-  %\item Do those top 10 retweeted messages get significantly more replies?
-  \item Are tweets with a certain sentiment more likely to generate more retweets?
+  \item \textbf{Optional}: Are tweets with a certain sentiment more likely to generate more retweets?
+  \item \textbf{Optional}: Do those top 10 retweeted messages get significantly more replies? (This one might be quite tricky.)
   \end{itemize}
 
-  You will probably need to implement several different mapper/reduce classes. For some of these questions, you might want to run a second MapReduce job, using the output of your first one. For others, you might find it most efficient to use a script or some code on your own computer to calculate the final answer.
+  These are not easy, and you will probably need to implement several different mapper/reduce classes. For some of these questions, you might want to run a second MapReduce job, using the output of your first one. For others, you might find it most efficient to use a script or some code on your own computer to calculate the final answer.
 
   You'll probably want to work on a separate copy of your code for this; remember to keep a copy of your code from the other tasks.
 
-  %Think about how you can implement this efficiently! You can consider things like running another MapReduce job, on the output of your first one.
+  Finally: In the provided data sets (especially the smaller ones), you will find that there aren't a unique set of top 5 users, or top 10 messages.
+  You can just pick arbitrarily (or use a slightly different number, if you'd prefer). Just show that you've implemented something which \emph{can}
+  answer the question, and explain why!
 
   \pagebreak
   \section{Report} \label{sec:report}
@@ -280,6 +286,6 @@ DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job
   
   \section{Grading}
   Deadline: See Blackboard. Remember, you have to hand in all your scripts with your code, so you \emph{must} have already made sure you can run all the experiments you need.\\
-  Grading: Tag Counter: 4/10, Sentiment Analysis: 3/10, Retweets and Replies: 3/10.  \\
+  Grading: Tag Counter: 4/10, Sentiment Analysis: 3/10, Retweets and Replies: 3/10. \\
   To obtain full points, your code must work correctly, be well-commented and tidy, and produce correct results. In your report, you will have to include all the requested graphs and results, and provide everything requested in Section \ref{sec:report}.
 \end{document}     
