@@ -42,7 +42,8 @@
 
 \title{Hadoop Assignment\\
   Concurrency en Parallel Programmeren 2015,\\
-  University of Amsterdam
+  University of Amsterdam,\\
+  NOT FINAL VERSION
 }
 
 
@@ -62,7 +63,9 @@
   \end{enumerate}
 
   There is a small dataset (5k tweets) available on Blackboard. We also have larger datasets available in \texttt{/projects/cpp2015} on the cluster. Using them for your experiments is optional, but you might find them useful. Remember, though: the cluster is a shared resource. Don't run large numbers of unnecessary experiments!
- 
+
+  This is probably \textbf{not} the final version of this assignment. If you didn't attend the workgroup on Wednesday, please make sure you check Blackboard for updates.
+
   \section{Implementation}
 
   You should already have the framework from the tutorial; you should simply build on top of it, and implement these analysis tasks using MapReduce with Hadoop.
@@ -214,13 +217,17 @@ DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job
   \item How many tweets are there for each type of reaction (retweets, and replies)?
   \item When do most retweets happen (what times of day), and when do most replies happen? Is this different for different languages?
   \item What are the top 10 retweeted messages?
-  \item Do those top 10 retweeted messages get significantly more replies?
+  \item Who are the top 5 users who are replied to, and which users send the most replies to each of them?
+  \item Who are the top 5 users whose messages are retweeted, and who retweeted each of them the most?
+  %\item Do those top 10 retweeted messages get significantly more replies?
   \item Are tweets with a certain sentiment more likely to generate more retweets?
   \end{itemize}
 
-  You'll probably want to work on a separate copy of your code for this; remember to keep a copy of your code from the other tasks).
+  You will probably need to implement several different mapper/reduce classes. For some of these questions, you might want to run a second MapReduce job, using the output of your first one. For others, you might find it most efficient to use a script or some code on your own computer to calculate the final answer.
 
-  Think about how you can implement this efficiently! You can consider things like running another MapReduce job, on the output of your first one.
+  You'll probably want to work on a separate copy of your code for this; remember to keep a copy of your code from the other tasks.
+
+  %Think about how you can implement this efficiently! You can consider things like running another MapReduce job, on the output of your first one.
 
   \pagebreak
   \section{Report} \label{sec:report}
@@ -228,8 +235,8 @@ DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job
   You are required to hand in both a report and your code:
   
   \begin{enumerate}
+    \item Your source code, for all of the three tasks. You can hand in one version of the code for each task, or (ideally) one single piece of code that implements all three parts of the analysis. Please only hand in the \emph{source code}. We don't want your \texttt{target} folder or your output files, but your source code \textbf{must} be complete, including any scripts you may have written/used.
     \item A short report, of no more than 3 pages.
-    \item Your source code, for all of the three tasks. You can hand in one version of the code for each task, or (ideally) one single piece of code that implements all three parts of the analysis. Please only hand in the \emph{source code}. We don't want your \texttt{target} folder or your output files, but your source code \textbf{must} be complete.
   \end{enumerate}
 
   Your source code should be comprehensively commented, so that we can understand exactly what you're doing. Assume that we already know how
@@ -272,7 +279,7 @@ DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job
   Where $T_1$ is the execution time when using a single mapper, and $T_p$ is the execution time when using $p$ mappers.
   
   \section{Grading}
-  Deadline: See Blackboard. \\
+  Deadline: See Blackboard. Remember, you have to hand in all your scripts with your code, so you \emph{must} have already made sure you can run all the experiments you need.\\
   Grading: Tag Counter: 4/10, Sentiment Analysis: 3/10, Retweets and Replies: 3/10.  \\
   To obtain full points, your code must work correctly, be well-commented and tidy, and produce correct results. In your report, you will have to include all the requested graphs and results, and provide everything requested in Section \ref{sec:report}.
 \end{document}     
