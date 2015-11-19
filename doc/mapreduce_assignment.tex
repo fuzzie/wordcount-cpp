@@ -17,6 +17,7 @@
 
 \lstset{ %
   language=Java,        
+  belowskip=-10pt,
   basicstyle=\ttfamily\footnotesize,     
   backgroundcolor=\color{white},  
   showspaces=false,      
@@ -43,7 +44,7 @@
 \title{Hadoop Assignment\\
   Concurrency en Parallel Programmeren 2015,\\
   University of Amsterdam\\
-  Version 1.0
+  Version 1.1
 }
 
 
@@ -165,7 +166,13 @@
   \end{lstlisting}
   
   This method returns an integer that reflects the sentiment of a text. The higher the number, the more positive the sentiment of the text.
-  
+ 
+  It might be helpful to know that the standard deviation can be iteratively (value-by-value) calculated like this, after you've already
+  calculated the average (mean): 
+  \begin{lstlisting}
+    sd = sd + Math.pow(val - mean, 2);
+  \end{lstlisting}
+   
   Importantly, in this method, you need to specify the \texttt{parseModelPath} and \texttt{sentimentModelPath} variables. The first variable
   gives the path to the \texttt{englishPCFG.ser.gz} file, which is used to perform parsing of English-language text. The second gives the
   path to the \texttt{sentiment.ser.gz} file, used for sentiment detection.
@@ -176,11 +183,19 @@
   To make them available, you just have to use the \texttt{DistributedCache}, which is provided by the MapReduce framework to cache files (text, archives, etc) needed by applications. To use it, you have to add the files you need to the cache before running your job:
 
 \begin{lstlisting}
-DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job);
+job.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"));
 \end{lstlisting}
 
-  Once you've done that, the files you've cached will be available in the directory which your mapper runs in (so you can just open them
+  Of course, you'll need to import the URI class too. Once you've done that, the files you've cached will be available in the directory which your mapper runs in (so you can just open them
   by their filename).
+  
+  This path doesn't exist on your own computer, so to make this work properly on both your own machine and the cluster, you'll
+  need to check whether your code is running locally, or on the cluster using MapReduce 2.0 (\emph{yarn}). You can obtain the framework you're running under
+  by checking the value of the \texttt{mapreduce.framework.name} configuration option, which will be \texttt{yarn} when running on the cluster, or
+  \texttt{local} if running locally:
+\begin{lstlisting}
+if (conf.get("mapreduce.framework.name").equals("yarn"))
+\end{lstlisting}
 
   To summarize, to complete this assignment, you'll need to:
   
@@ -191,12 +206,7 @@ DistributedCache.addCacheFile(new URI("/projects/cpp2015/sentiment.ser.gz"), job
     \item If the language is English, perform the sentiment analysis, and emit appropriate keys and values to the reducers.
     \item Finally, use the reducers to calculate the average (mean) sentiment and the standard deviation, for each hash tag.
   \end{enumerate}
-  
-  The standard deviation can be iteratively (value-by-value) calculated like this: 
-  \begin{lstlisting}
-    sd = sd + Math.pow(val - mean, 2);
-  \end{lstlisting}
-  
+   
   \section{Retweets and Replies}
 
   For the final part of the assignment, you need to investigate the main two types of
