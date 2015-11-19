@@ -22,6 +22,7 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
       <version>${hadoop.version}</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>edu.stanford.nlp</groupId>
@@ -30,11 +31,30 @@
     </dependency>
     <dependency>
       <groupId>me.champeau.jlangdetect</groupId>
+      <artifactId>jlangdetect</artifactId>
+      <version>0.4</version>
+    </dependency>
+    <dependency>
+      <groupId>me.champeau.jlangdetect</groupId>
+      <artifactId>jlangdetect-europarl</artifactId>
+      <version>0.4</version>
+    </dependency>
+    <dependency>
+      <groupId>me.champeau.jlangdetect</groupId>
       <artifactId>jlangdetect-extra</artifactId>
       <version>0.4</version>
     </dependency>
   </dependencies>
   <build>
+    <resources>
+      <resource>
+        <targetPath>lib</targetPath>
+        <directory>${project.build.directory}/lib</directory>
+        <includes>
+          <include>**/*.jar</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -47,24 +67,22 @@
         </configuration>
       </plugin>
       <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
         <configuration>
-          <archive>
-            <manifest>
-              <mainClass>nl.uva.cpp.WordCount</mainClass>
-            </manifest>
-          </archive>
-          <descriptors>
-            <descriptor>jar-with-dependencies.xml</descriptor>
-          </descriptors>
+          <excludeGroupIds>org.apache.hadoop</excludeGroupIds>
+          <excludeTransitive>true</excludeTransitive>
         </configuration>
         <executions>
           <execution>
-            <id>make-assembly</id>
-            <phase>package</phase>
+            <id>copy-dependencies</id>
             <goals>
-              <goal>single</goal>
+              <goal>copy-dependencies</goal>
             </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib/</outputDirectory>
+            </configuration>
           </execution>
         </executions>
       </plugin>
