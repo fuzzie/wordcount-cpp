@@ -122,10 +122,11 @@
   To perform sentiment analysis on English text, you will use the Stanford Natural Language Processing API (\url{http://nlp.stanford.edu/}). To use this API you'll need to import the necessary packages in your class: 
   
   \begin{lstlisting}
+    import java.util.Properties;
     import edu.stanford.nlp.ling.CoreAnnotations;
     import edu.stanford.nlp.pipeline.Annotation;
     import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-    import edu.stanford.nlp.rnn.RNNCoreAnnotations;
+    import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations;
     import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
     import edu.stanford.nlp.trees.Tree;
     import edu.stanford.nlp.util.CoreMap;
@@ -146,6 +147,7 @@
 	Annotation annotation = pipeline.process(text);
 	for (CoreMap sentence : annotation
 	.get(CoreAnnotations.SentencesAnnotation.class)) {
+	  // 'AnnotatedTree' is 'SentimentAnnotatedTree' in newer versions
 	  Tree tree = sentence
 	  .get(SentimentCoreAnnotations.AnnotatedTree.class);
 	  int sentiment = RNNCoreAnnotations.getPredictedClass(tree);
@@ -157,15 +159,13 @@
 	}
       }
       
-      //This method is very demanding so try to save some memory.
-      pipeline = null;
-      System.gc();
-
       return mainSentiment;
     }
   \end{lstlisting}
   
   This method returns an integer that reflects the sentiment of a text. The higher the number, the more positive the sentiment of the text.
+
+  \textbf{Hint}: Loading the models is very slow. You can dramatically improve the performance of this function by creating the pipeline in the class constructor instead.
  
   It might be helpful to know that the standard deviation can be iteratively (value-by-value) calculated like this, after you've already
   calculated the average (mean): 
