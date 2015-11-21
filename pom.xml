@@ -30,6 +30,12 @@
       <version>3.4.1</version>
     </dependency>
     <dependency>
+     <!-- nlp needs this -->
+     <groupId>com.googlecode.efficient-java-matrix-library</groupId>
+     <artifactId>ejml</artifactId>
+     <version>0.23</version>
+    </dependency>
+    <dependency>
       <groupId>me.champeau.jlangdetect</groupId>
       <artifactId>jlangdetect</artifactId>
       <version>0.4</version>
